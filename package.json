@@ -1,0 +1,25 @@
+{
+  "name": "ng2-backbone",
+  "version": "0.1.0",
+  "description": "Backbone data model and collection for Angular 2",
+  "main": "ng2-backbone.js",
+  "scripts": {
+    "test": "grunt karma:ci"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/diegomvh/ng2-backbone.git"
+  },
+  "keywords": [
+    "Backbone",
+    "Angular2",
+    "data",
+    "model",
+    "collection"
+  ],
+  "author": "Diego van Haaster",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/diegomvh/ng2-backbone/issues"
+  }
+}
