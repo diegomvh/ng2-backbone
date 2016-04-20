@@ -4,7 +4,9 @@
   "description": "Backbone data model and collection for Angular 2",
   "main": "ng2-backbone.js",
   "scripts": {
-    "test": "grunt karma:ci"
+    "test": "grunt karma:ci",
+    "watch": "tsc -p src -w",
+    "build": "rm -rf lib && tsc -p src"
   },
   "repository": {
     "type": "git",
