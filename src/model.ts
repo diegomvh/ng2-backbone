@@ -1,7 +1,7 @@
 import * as _ from 'underscore';
 import {EventEmitter} from 'angular2/core';
 import {RequestMethod} from 'angular2/http';
-import * as mixin from 'utils/mixin';
+import * as mixin from './mixin';
 import {IAttributes, IEvent, ISynchronizable} from './interface';
 import {Observable} from 'rxjs/Rx';
 

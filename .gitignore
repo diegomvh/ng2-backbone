@@ -1,2 +1,6 @@
 node_env/
 node_modules/
+typings/
+*.log
+**/*.js
+**/*.js.map

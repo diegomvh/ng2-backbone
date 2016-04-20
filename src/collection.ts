@@ -2,9 +2,9 @@ import * as _ from 'underscore';
 import {Injectable, Output, EventEmitter} from 'angular2/core';
 import {Observable, Subject} from 'rxjs/Rx';
 
-import * as mixin from 'utils/mixin';
-import {Model} from '../models/base.model'
-import {ISynchronizable, IEvent, INewable} from '../interfaces/base.interface'
+import * as mixin from './mixin';
+import {Model} from './model'
+import {ISynchronizable, IEvent, INewable} from './interface'
 
 // Default options for `Collection#set`.
 var DEFAULT_SET_OPTIONS = {add: true, remove: true, merge: true};
