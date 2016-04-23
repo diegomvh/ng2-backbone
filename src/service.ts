@@ -10,6 +10,33 @@ import {ISynchronizable, IEvent} from './interface'
 
 declare var __CSRF_TOKEN: string;
 
+function buildParams(prefix, obj, append) {
+  if (_.isArray(obj)) {
+    // Serialize array item.
+    _.each(obj, function (value, index) {
+      if (/\[\]$/.test(prefix)) {
+        append(prefix, value);
+      }
+      else {
+        buildParams(
+          prefix + "[" + (typeof value === "object" || _.isArray(value) ?
+            index : "") + "]", value, append
+        );
+      }
+    });
+  }
+  else if (obj != null && typeof obj === "object") {
+    // Serialize object item.
+    _.each(obj, function (value, key) {
+      buildParams(prefix + "[" + key + "]", value, append);
+    });
+  }
+  else {
+    // Serialize scalar item.
+    append(prefix, obj);
+  }
+}
+
 export class Service<M, C> {
   protected _url: string;
   protected _model: INewable<M>;
@@ -38,12 +65,13 @@ export class Service<M, C> {
   }
 
   _search (extra = {}) {
-    let search = new URLSearchParams();
-    _.each(extra, (value, key) => {
-      value = _.isArray(value) ? value : [value];
-      key = _.isArray(value) ? `${key}[]` : key;
-      _.each(value, v => search.append(key, v));
-    });
+    var search = new URLSearchParams();
+    var append = (key, value) => {
+      value = _.isFunction(value) ? value() : value;
+      search.append(key, value);
+    };
+    for (var prefix in extra)
+      buildParams(prefix, extra[prefix], append);
     return search;
   }
 
@@ -54,7 +82,6 @@ export class Service<M, C> {
     });
     _.each(extra, (value, key) => {
       value = _.isArray(value) ? value : [value];
-      key = _.isArray(value) ? `${key}[]` : key;
       _.each(value, v => headers.append(key, v));
     });
     return headers;
@@ -70,9 +97,11 @@ export class Service<M, C> {
     });
 
     var params = {
+      url: null,
       method: type,
       headers: this._headers(options.headers),
-      search: this._search(options.search)
+      search: this._search(options.search),
+      body: null
     };
 
     // Ensure that we have a URL.
