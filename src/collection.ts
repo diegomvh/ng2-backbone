@@ -4,7 +4,8 @@ import {Observable, Subject} from 'rxjs/Rx';
 
 import * as mixin from './mixin';
 import {Model} from './model'
-import {ISynchronizable, IEvent, INewable} from './interface'
+import {IAttributes, IEvent, INewable} from './interface'
+import {SObject} from './object'
 
 // Default options for `Collection#set`.
 var DEFAULT_SET_OPTIONS = {add: true, remove: true, merge: true};
@@ -21,72 +22,23 @@ var splice = function(array, insert, at) {
   for (i = 0; i < tail.length; i++) array[i + length + at] = tail[i];
 };
 
-export class Collection<M extends ISynchronizable> implements ISynchronizable {
+export class Collection<M extends SObject> extends SObject {
   protected model: INewable<M>;
-  protected service: any;
   protected comparator: any;
   private length: number = 0;
   private _byId: any = {};
 
-  // Events
-  public event$: EventEmitter<IEvent> = new EventEmitter<IEvent>();
-
-  // Status
-  public $status = {
-    deleting: false,
-    loading: false,
-    saving: false,
-    syncing: false
-  }
-
-  public $setStatus(key, value?, options: any = {}) {
-    var attr, attrs;
-
-    if (_.isUndefined(key))
-      return this;
-
-    if (_.isObject(key)) {
-      attrs = key;
-      options = value;
-    } else {
-      (attrs = {})[key] = value;
-    }
-
-    for (attr in this.$status) {
-      if (attrs.hasOwnProperty(attr) && _.isBoolean(attrs[attr])) {
-        this.$status[attr] = attrs[attr];
-      }
-    }
-  }
-
-  public $resetStatus() {
-    return this.$setStatus({
-      deleting: false,
-      loading:  false,
-      saving:   false,
-      syncing:  false
-    });
-  }
-
   constructor (models, options: any = {}) {
+    super(options);
     this.model$ = new Subject<M>();
     if (options.model) this.model = options.model;
-    if (options.service) this.service = options.service;
     if (options.comparator) this.comparator = options.comparator;
     this._reset();
     if (models) this.reset(models, _.extend({silent: true}, options));
   }
 
-  // --------------------- URL
-  protected _url: string;
-  url() : string {
-    return _.result(this, '_url') ||
-      _.result(this.service, '_url') ||
-      this.event$.error("url");  // Error o event error ?
-  }
-
   // --------------------- Query String
-  protected _query: any = {};
+  protected query: any = {};
   setQueryField(key: any, val: any, options: any = {}) : Collection<M> {
     if (key == null) return this;
 
@@ -101,7 +53,7 @@ export class Collection<M extends ISynchronizable> implements ISynchronizable {
 
     for (var attr in attrs) {
       val = attrs[attr];
-      unset ? delete this._query[attr] : this._query[attr] = val;
+      unset ? delete this.query[attr] : this.query[attr] = val;
     }
 
     return this;
@@ -129,19 +81,6 @@ export class Collection<M extends ISynchronizable> implements ISynchronizable {
   // models' attributes.
   toJSON(options: any = {}) {
     return _.map(this.models, model => model.toJSON(options));
-  }
-
-  // Proxy `Service.sync` by default.
-  sync(method: string, options: any = {}) {
-    let obs$ = this.service.sync(method, this, options);
-    obs$.subscribe(resp => {
-      this.event$.emit(<IEvent> {
-        topic: 'sync',
-        emitter: this,
-        payload: resp,
-        options: options});
-    });
-    return obs$
   }
 
   // Add a model, or list of models to the set. `models` may be Backbone
@@ -418,7 +357,7 @@ export class Collection<M extends ISynchronizable> implements ISynchronizable {
     let thisCopy = _.clone(this);
 
     // map query parameters
-    let query = _.pairs(_.extend({}, this._query, search)),
+    let query = _.pairs(_.extend({}, this.query, search)),
         kvp,
         v;
     for (let i = 0; i < query.length; i++) {

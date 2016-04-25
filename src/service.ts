@@ -38,9 +38,9 @@ function buildParams(prefix, obj, append) {
 }
 
 export class Service<M, C> {
-  protected _url: string;
-  protected _model: INewable<M>;
-  protected _collection: INewable<C>;
+  protected url: string;
+  protected model: INewable<M>;
+  protected collection: INewable<C>;
   // Turn on `emulateHTTP` to support legacy HTTP servers. Setting this option
   // will fake `"PATCH"`, `"PUT"` and `"DELETE"` requests via the `_method` parameter and
   // set a `X-Http-Method-Override` header.
@@ -144,22 +144,22 @@ export class Service<M, C> {
       topic: 'request',
       emitter: model,
       payload: obs$,
-      options: options});
+      options: params});
     return obs$;
   }
 
   createCollection (models?: any, options?) : C {
-    return new this._collection(
+    return new this.collection(
       models, _.extend({service: this}, options));
   }
 
   createModel (attrs?: any, options?) : M {
-    return new this._model(
+    return new this.model(
       attrs, _.extend({service: this}, options));
   }
 
   modelId (attrs: any) {
-    return attrs[this._model.prototype.idAttribute || 'id'];
+    return attrs[this.model.prototype.idAttribute || 'id'];
   }
 
   protected _onError (error: any) {

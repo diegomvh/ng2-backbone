@@ -1,8 +1,3 @@
-export interface ISynchronizable {
-  url() : string;
-  toJSON(options?: any) : any;
-}
-
 export interface IAttributes {
   id: any;
 }

@@ -1,11 +1,11 @@
 import * as _ from 'underscore';
 import {EventEmitter} from 'angular2/core';
-import {RequestMethod} from 'angular2/http';
 import * as mixin from './mixin';
-import {IAttributes, IEvent, ISynchronizable} from './interface';
+import {IAttributes, IEvent} from './interface';
+import {SObject} from './object';
 import {Observable} from 'rxjs/Rx';
 
-export class Model<A extends IAttributes> implements ISynchronizable {
+export class Model<A extends IAttributes> extends SObject {
   public id: any;
   public cid: any;
   protected idAttribute: string = 'id';
@@ -14,61 +14,13 @@ export class Model<A extends IAttributes> implements ISynchronizable {
   protected _changing: boolean;
   protected _pending: boolean;
   protected validationError: any;
-  protected service: any;
-
-  // Events
-  public event$: EventEmitter<IEvent> = new EventEmitter<IEvent>();
-
-  // Status
-  public $status = {
-    deleting: false,
-    loading: false,
-    saving: false,
-    syncing: false
-  }
-
-  public $setStatus(key, value?, options = {}) {
-    var attr, attrs;
-
-    if (_.isUndefined(key))
-      return this;
-
-    if (_.isObject(key)) {
-      attrs = key;
-      options = value;
-    } else {
-      (attrs = {})[key] = value;
-    }
-
-    for (attr in this.$status) {
-      if (attrs.hasOwnProperty(attr) && _.isBoolean(attrs[attr])) {
-        this.$status[attr] = attrs[attr];
-      }
-    }
-  }
-
-  public $resetStatus() {
-    return this.$setStatus({
-      deleting: false,
-      loading:  false,
-      saving:   false,
-      syncing:  false
-    });
-  }
 
   constructor (attrs: any = <A> {}, options : any = {}) {
-    this.event$.filter(e => e.topic == 'request')
-      .subscribe(
-        e => this.$setStatus({
-          deleting: (e.options.method === RequestMethod.Delete),
-          loading: (e.options.method === RequestMethod.Get),
-          saving: (e.options.method === RequestMethod.Post || e.options.method === RequestMethod.Put),
-          syncing:  true
-        }));
-    this.event$.filter(e => _.contains(['sync', 'error'], e.topic))
-        .subscribe(e => this.$resetStatus());
+    super(options);
+    // For clearing status when destroy model on collection
+    this.event$.filter(e => e.topic == 'destroy')
+        .subscribe(e => this._resetStatus());
     this.cid = _.uniqueId(this.cidPrefix);
-    if (options.service) this.service = options.service;
     if (options.parse) attrs = this.parse(attrs, options) || <A> {};
     let defaults = _.result(this, 'defaults');
     attrs = _.defaults(_.extend({}, defaults, attrs), defaults);
@@ -86,10 +38,7 @@ export class Model<A extends IAttributes> implements ISynchronizable {
   })
 
   url() : string {
-    let base =
-      _.result(this, '_url') ||
-      _.result(this.service, '_url') ||
-      this.event$.error("url");   //TODO: Error o evento de error?
+    let base = super.url();
     if (this.isNew()) return base;
     let id = this.get(this.idAttribute);
     return base.replace(/[^\/]$/, '$&/') + encodeURIComponent(id);
@@ -195,20 +144,6 @@ export class Model<A extends IAttributes> implements ISynchronizable {
   // Return a copy of the model's `attributes` object.
   toJSON (options?: any) {
     return _.clone(this.attributes);
-  }
-
-  // Proxy `Service.sync` by default -- but override this if you need
-  // custom syncing semantics for *this* particular model.
-  sync(method: string, options?) {
-    let obs$ = this.service.sync(method, this, options);
-    obs$.subscribe(resp => {
-      if (!this.isNew()) this.event$.emit(<IEvent> {
-        topic: 'sync',
-        emitter: this,
-        payload: resp,
-        options: options});
-    });
-    return obs$
   }
 
   // Remove an attribute from the model, firing `"change"`. `unset` is a noop
@@ -345,7 +280,6 @@ export class Model<A extends IAttributes> implements ISynchronizable {
     var wait = options.wait;
 
     var destroy = () => {
-      this.complete();
       this.event$.emit(<IEvent>{
         topic: 'destroy',
         emitter: this,
