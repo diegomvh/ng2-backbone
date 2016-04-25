@@ -353,18 +353,26 @@ export class Collection<M extends SObject> extends SObject {
   fetch(options: any = {}) {
     options = _.extend({parse: true}, options);
 
-    let search = options.search || (options.search={});
+    let query = options.query || (options.query={});
     let thisCopy = _.clone(this);
 
+    var url = options.url || _.result(this, 'url');
+
+    var qsi = url.indexOf('?');
+    if (qsi != -1) {
+      _.extend(query, this.service.queryStringToParams(url.slice(qsi + 1)));
+      options.url = url.slice(0, qsi);
+    }
+
     // map query parameters
-    let query = _.pairs(_.extend({}, this.query, search)),
+    let q = _.pairs(_.extend({}, this.query, query)),
         kvp,
         v;
-    for (let i = 0; i < query.length; i++) {
-      kvp = query[i];
+    for (let i = 0; i < q.length; i++) {
+      kvp = q[i];
       v = kvp[1];
       v = _.isFunction(v) ? v.call(thisCopy) : v;
-      if (v != null) search[kvp[0]] = v;
+      if (v != null) query[kvp[0]] = v;
     }
 
     let obs$ = this.sync('read', options);

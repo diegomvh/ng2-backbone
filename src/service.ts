@@ -100,7 +100,7 @@ export class Service<M, C> {
       url: null,
       method: type,
       headers: this._headers(options.headers),
-      search: this._search(options.search),
+      search: this._search(options.query),
       body: null
     };
 
@@ -134,7 +134,7 @@ export class Service<M, C> {
       params.body : JSON.stringify(params.body);
 
     // Make the request, allowing the user to override any request options.
-    params = _.extend(params, _.omit(options, "headers", "search"));
+    params = _.extend(params, _.omit(options, "headers"));
     let req = new Request(new RequestOptions(params));
 
     let obs$ = options.obs$ = this._http.request(req)
@@ -160,6 +160,31 @@ export class Service<M, C> {
 
   modelId (attrs: any) {
     return attrs[this.model.prototype.idAttribute || 'id'];
+  }
+
+  paramsToQueryString(params) {
+    var s = [], encode = encodeURIComponent, append = (key, value) => {
+      value = _.isFunction(value) ? value() : value;
+      s[s.length] = encode(key) + "=" + encode(value);
+    };
+    for (var prefix in params)
+      buildParams(prefix, params[prefix], append);
+    return s.join( "&" ).replace( /%20/g, "+" );
+  }
+
+  queryStringToParams(qs) {
+    var kvp, k, v, ls, params = {}, decode = decodeURIComponent;
+    var kvps = qs.split('&');
+    for (var i = 0, l = kvps.length; i < l; i++) {
+      var param = kvps[i];
+      kvp = param.split('='), k = kvp[0], v = kvp[1];
+      if (v == null) v = true;
+      k = decode(k), v = decode(v), ls = params[k];
+      if (_.isArray(ls)) ls.push(v);
+      else if (ls) params[k] = [ls, v];
+      else params[k] = v;
+    }
+    return params;
   }
 
   protected _onError (error: any) {

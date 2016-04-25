@@ -33,21 +33,6 @@ function finiteInt (val, name) {
   return val;
 }
 
-function queryStringToParams (qs) {
-  var kvp, k, v, ls, params = {}, decode = decodeURIComponent;
-  var kvps = qs.split('&');
-  for (var i = 0, l = kvps.length; i < l; i++) {
-    var param = kvps[i];
-    kvp = param.split('='), k = kvp[0], v = kvp[1];
-    if (v == null) v = true;
-    k = decode(k), v = decode(v), ls = params[k];
-    if (_isArray(ls)) ls.push(v);
-    else if (ls) params[k] = [ls, v];
-    else params[k] = v;
-  }
-  return params;
-}
-
 // hack to make sure the whatever event handlers for this event is run
 // before func is, and the event handlers that func will trigger.
 function runOnceAtLastHandler (col, event, func) {
@@ -1108,19 +1093,7 @@ export class PageableCollection<M> extends Collection {
       options.url = this.links[state.currentPage];
     }
 
-    var data = options.data || {};
-
-    // dedup query params
-    var url = options.url || this.url || "";
-    if (_isFunction(url)) url = url.call(this);
-    var qsi = url.indexOf('?');
-    if (qsi != -1) {
-      _extend(data, queryStringToParams(url.slice(qsi + 1)));
-      url = url.slice(0, qsi);
-    }
-
-    options.url = url;
-    options.data = data;
+    var query = options.query || (options.query = {});
 
     // map params except directions
     var queryParams = this.mode == "client" ?
@@ -1130,8 +1103,8 @@ export class PageableCollection<M> extends Collection {
     var thisCopy = _.clone(this);
     _.each(queryParams, function (v, k) {
       v = _isFunction(v) ? v.call(thisCopy) : v;
-      if (state[k] != null && v != null && _.isUndefined(data[v])) {
-        data[v] = state[k];
+      if (state[k] != null && v != null && _.isUndefined(query[v])) {
+        query[v] = state[k];
       }
     }, this);
 
@@ -1142,28 +1115,16 @@ export class PageableCollection<M> extends Collection {
         queryParams.order.call(thisCopy) :
         queryParams.order;
         if (!_isArray(state.order)) {
-            data[o] = this.queryParams.directions[state.order + ""];
+            query[o] = this.queryParams.directions[state.order + ""];
         }
         else {
-            data[o] = [];
+            query[o] = [];
             for (i = 0; i < state.order.length; i += 1) {
-                data[o].push(this.queryParams.directions[state.order[i]]);
+                query[o].push(this.queryParams.directions[state.order[i]]);
             }
         }
     }
-    else if (!state.sortKey) delete data[queryParams.order];
-
-    // map extra query parameters
-    var extraKvps = _pairs(_omit(this.queryParams,
-        "currentPage", "pageSize", "totalPages", "totalRecords", "sortKey", "order", "directions")),
-        kvp,
-        v;
-    for (i = 0; i < extraKvps.length; i++) {
-      kvp = extraKvps[i];
-      v = kvp[1];
-      v = _isFunction(v) ? v.call(thisCopy) : v;
-      if (v != null) data[kvp[0]] = v;
-    }
+    else if (!state.sortKey) delete query[queryParams.order];
 
     let obs$ = super.fetch(
       _extend({}, options, {silent: mode != "server"}) // on client and infinite silent the first reset from backbone
