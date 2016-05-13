@@ -1,5 +1,5 @@
 import * as _ from 'underscore';
-import {Injectable, Output, EventEmitter} from 'angular2/core';
+import {Injectable, Output, EventEmitter} from '@angular/core';
 import {Observable, Subject} from 'rxjs/Rx';
 
 import * as mixin from './mixin';

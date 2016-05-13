@@ -1,7 +1,7 @@
 import * as _ from 'underscore';
-import {Injectable, Output, EventEmitter} from 'angular2/core';
-import {Http, Response} from 'angular2/http';
-import {Headers, URLSearchParams, Request, RequestMethod, RequestOptions} from 'angular2/http';
+import {Injectable, Output, EventEmitter} from '@angular/core';
+import {Http, Response} from '@angular/http';
+import {Headers, URLSearchParams, Request, RequestMethod, RequestOptions} from '@angular/http';
 import {Observable} from 'rxjs/Rx';
 
 import {Model} from './model'

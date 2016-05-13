@@ -1,13 +1,13 @@
 import * as _ from 'underscore';
-import {RequestMethod} from 'angular2/http';
-import {EventEmitter} from 'angular2/core';
+import {RequestMethod} from '@angular/http';
+import {EventEmitter} from '@angular/core';
 import {IEvent} from './interface';
 
 export class SObject {
-	protected urlRoot: string;
+  protected urlRoot: string;
   protected service: any;
 
-	// Events
+  // Events
   public event$: EventEmitter<IEvent> = new EventEmitter<IEvent>();
 
   // Status
@@ -47,8 +47,8 @@ export class SObject {
     });
   }
 
-	constructor (options : any = {}) {
-		this.event$.filter(e => e.topic == 'request')
+  constructor (options : any = {}) {
+    this.event$.filter(e => e.topic == 'request')
       .subscribe(
         e => this._setStatus({
           deleting: (e.options.method === RequestMethod.Delete),
@@ -58,22 +58,22 @@ export class SObject {
         }));
     this.event$.filter(e => _.contains(['sync', 'error'], e.topic))
         .subscribe(e => this._resetStatus());
-		if (options.service) this.service = options.service;
-	}
+    if (options.service) this.service = options.service;
+  }
 
-	url() : string {
+  url() : string {
     return 	_.result(this, 'urlRoot') ||
       _.result(this.service, 'url') ||
       this.event$.emit(<IEvent> {
-				topic: 'error',
-				emitter: this});
+        topic: 'error',
+        emitter: this});
   }
 
-	// Return a json representation of the object
+  // Return a json representation of the object
   toJSON (options: any = {}) {}
 
-	// Synchronized object is not new
-	isNew() { return false; }
+  // Synchronized object is not new
+  isNew() { return false; }
 
   // Proxy `Service.sync` by default -- but override this if you need
   // custom syncing semantics for *this* particular object.

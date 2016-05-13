@@ -1,5 +1,5 @@
 import * as _ from 'underscore';
-import {EventEmitter} from 'angular2/core';
+import {EventEmitter} from '@angular/core';
 import * as mixin from './mixin';
 import {IAttributes, IEvent} from './interface';
 import {SObject} from './object';
