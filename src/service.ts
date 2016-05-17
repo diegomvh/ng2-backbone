@@ -6,7 +6,7 @@ import {Observable} from 'rxjs/Rx';
 
 import {Model} from './model'
 import {Collection} from './collection'
-import {ISynchronizable, IEvent} from './interface'
+import {IEvent, INewable} from './interface'
 
 declare var __CSRF_TOKEN: string;
 

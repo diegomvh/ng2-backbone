@@ -2,10 +2,10 @@ import * as _ from 'underscore';
 import {EventEmitter} from '@angular/core';
 import * as mixin from './mixin';
 import {IAttributes, IEvent} from './interface';
-import {SObject} from './object';
+import {Synchronizable} from './synchronizable';
 import {Observable} from 'rxjs/Rx';
 
-export class Model<A extends IAttributes> extends SObject {
+export class Model<A extends IAttributes> extends Synchronizable {
   public id: any;
   public cid: any;
   protected idAttribute: string = 'id';

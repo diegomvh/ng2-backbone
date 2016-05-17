@@ -5,7 +5,7 @@ import {Observable, Subject} from 'rxjs/Rx';
 import * as mixin from './mixin';
 import {Model} from './model'
 import {IAttributes, IEvent, INewable} from './interface'
-import {SObject} from './object'
+import {Synchronizable} from './synchronizable';
 
 // Default options for `Collection#set`.
 var DEFAULT_SET_OPTIONS = {add: true, remove: true, merge: true};
@@ -22,7 +22,7 @@ var splice = function(array, insert, at) {
   for (i = 0; i < tail.length; i++) array[i + length + at] = tail[i];
 };
 
-export class Collection<M extends SObject> extends SObject {
+export class Collection<M extends Synchronizable> extends Synchronizable {
   protected model: INewable<M>;
   protected comparator: any;
   private length: number = 0;
@@ -282,7 +282,7 @@ export class Collection<M extends SObject> extends SObject {
 
   // Slice out a sub-array of models from the collection.
   slice() {
-    return slice.apply(this.models, arguments);
+    return Array.prototype.slice.apply(this.models, arguments);
   }
 
   // Get a model from the set by id, cid, model object with id or cid
@@ -396,7 +396,7 @@ export class Collection<M extends SObject> extends SObject {
     let obs$ = model.save(null, options);
     obs$.subscribe(
       resp => {
-        if (wait) this.add(m, callbackOpts);
+        if (wait) this.add(model, options);
       }
     );
     return model;
@@ -405,7 +405,14 @@ export class Collection<M extends SObject> extends SObject {
   // **parse** converts a response into a list of models to be added to the
   // collection. The default implementation is just to pass it through.
   parse(resp, options) {
-    return resp;
+    let result = resp.json();
+    if (result && _.isObject(result)) {
+      let arrays = _.filter(result, (v, k) => _.isArray(v));
+      if (arrays.length == 1)
+        return arrays[0];
+    }
+
+    return result;
   }
 
   // Create a new collection with an identical list of models as this one.
